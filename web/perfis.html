@@ -1,0 +1,36 @@
+<!doctype html><html lang="pt-br"><meta charset="utf-8"><title>LitDex — Perfis</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/static/base.css">
+<style>main{max-width:880px;margin:1.5rem auto;padding:0 1.2rem}.card{border:1px solid var(--rule);background:var(--paper);border-radius:10px;padding:.8rem 1.1rem;margin:.7rem 0}
+ .card.ativo{border-color:var(--accent);box-shadow:0 0 0 2px #e8d9b5}h3{margin:.1rem 0}.grp{margin-top:.8rem;font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}</style>
+<header id="nav"></header>
+<main><h2 style="font-weight:500">Perfis — recortes de pesquisa</h2>
+<p class="muted">O <b>Geral</b> é o acervo inteiro. Um perfil é um recorte para uma pesquisa pontual (uma tese, um capítulo, um curso): tudo que você cria dentro dele <b>já está no Geral</b>, e fichas antigas podem ser anexadas sem copiar nada.
+Grafo, linha do tempo, mapa e listas mostram só o perfil ativo.</p>
+<div><input id="novo" placeholder="nome do novo perfil"> <button id="criar">criar</button></div><div id="lista"></div></main>
+<script src="/static/base.js"></script>
+<script>
+montarNav("/ui/perfis");
+let V; const lista = $("#lista");
+$("#criar").onclick = async () => { const n = $("#novo").value.trim(); if (!n) return;
+  try { const r = await api("/api/perfis", {method: "POST", body: {nome: n}}); Perfil.set(r.id); location.reload(); } catch (e) { aviso(e.message); } };
+(async function () { V = await vocab(); desenhar(); })();
+async function desenhar() {
+  const ps = await api("/api/perfis"); lista.innerHTML = "";
+  lista.append(el("div", {class: "card" + (!Perfil.id ? " ativo" : "")}, el("h3", {}, "Geral"), el("div", {class: "muted"}, "todo o acervo"),
+    Perfil.id ? el("button", {style: "margin-top:.4rem", onclick: () => { Perfil.set(0); location.reload(); }}, "usar o Geral") : el("span", {class: "ok"}, "✓ ativo")));
+  for (const p of ps) {
+    const ativo = Perfil.id === p.id, itens = el("div"), card = el("div", {class: "card" + (ativo ? " ativo" : "")});
+    card.append(el("h3", {}, p.nome), el("div", {class: "muted"}, `${p.n} ficha(s)`),
+      el("div", {style: "margin-top:.4rem"}, ativo ? el("span", {class: "ok"}, "✓ ativo  ") : el("button", {onclick: () => { Perfil.set(p.id); location.reload(); }}, "ativar"), " ",
+        el("button", {class: "mini", onclick: async () => { const n = prompt("Novo nome:", p.nome); if (n) { try { await api(`/api/perfis/${p.id}`, {method: "PATCH", body: {nome: n}}); location.reload(); } catch (e) { aviso(e.message); } } }}, "renomear"), " ",
+        el("button", {class: "mini perigo", onclick: async () => { if (confirm(`Apagar o perfil «${p.nome}»?\nNenhuma ficha é apagada — só o recorte.`)) { await api(`/api/perfis/${p.id}`, {method: "DELETE"}); if (ativo) Perfil.set(0); location.reload(); } }}, "apagar perfil")));
+    const busca = el("input", {placeholder: "anexar uma ficha que já existe…", style: "width:18rem;margin-top:.5rem"}); card.append(busca, itens);
+    const pinta = async () => { const it = await api(`/api/perfis/${p.id}/itens`); itens.innerHTML = "";
+      Object.entries(it).filter(([, l]) => l.length).forEach(([t, l]) => { itens.append(el("div", {class: "grp"}, V.entidades[t].plural));
+        l.forEach(x => itens.append(el("span", {class: "chip"}, el("span", {class: "dot " + t}), el("a", {href: urlFicha(t, x.id)}, x.nome), el("button", {class: "x", title: "tirar do perfil", onclick: async () => { await api(`/api/perfis/${p.id}/itens/${t}/${x.id}`, {method: "DELETE"}); pinta(); }}, "×")))); }); };
+    lista.append(card); buscaEntidade(busca, {tipos: Object.keys(V.entidades), criar: false, onPick: async it => { await api(`/api/perfis/${p.id}/itens`, {method: "POST", body: {tipo: it.tipo, id: it.id}}); pinta(); aviso("anexada"); }});
+    pinta();
+  }
+}
+</script></html>

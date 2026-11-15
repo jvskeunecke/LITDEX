@@ -1,0 +1,19 @@
+<!doctype html><html lang="pt-br"><meta charset="utf-8"><title>LitDex — Mapa</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/static/base.css"><link rel="stylesheet" href="/vendor/maplibre-gl.css">
+<style>
+ body{overflow:hidden}.tela{display:grid;grid-template-columns:300px 1fr;height:calc(100vh - 3.4rem)}
+ #lado{padding:.9rem 1rem;overflow:auto;background:#fffdf8e8;border-right:1px solid var(--rule);font-size:.86rem}
+ #lado h4{margin:1.1rem 0 .35rem;font:600 .72rem system-ui;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+ #lado label{display:block;cursor:pointer;margin:.15rem 0}
+ #palco{position:relative}#map{position:absolute;inset:0}
+ #info{position:absolute;right:.8rem;top:.8rem;width:300px;max-height:calc(100% - 1.6rem);overflow:auto;background:var(--paper);border:1px solid var(--rule);border-radius:14px;padding:.85rem 1.05rem;box-shadow:var(--sombra);font-size:.86rem;display:none;z-index:5}
+ #info h3{margin:.1rem 0;font-size:1.05rem}#info .x{float:right}
+ #modo{position:absolute;left:50%;transform:translateX(-50%);top:.8rem;background:var(--ink);color:#fff;padding:.4rem 1rem;border-radius:20px;font-size:.84rem;display:none;z-index:5}
+ #estado{position:absolute;left:.8rem;bottom:.8rem;background:#fffdf8e8;border:1px solid var(--rule);border-radius:10px;padding:.2rem .7rem;font:.76rem system-ui;color:var(--muted);z-index:5}
+ .semc{display:flex;justify-content:space-between;gap:.4rem;margin:.25rem 0;align-items:center}
+ .maplibregl-popup-content{font:13px system-ui;border-radius:10px}
+</style>
+<header id="nav"></header>
+<div class="tela"><aside id="lado"></aside><div id="palco"><div id="map"></div><div id="modo"></div><div id="info"></div><div id="estado"></div></div></div>
+<script src="/vendor/d3.min.js"></script><script src="/vendor/maplibre-gl.js"></script><script src="/static/base.js"></script><script src="/static/js/mapa.js"></script></html>

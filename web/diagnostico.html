@@ -1,0 +1,58 @@
+<!doctype html><html lang="pt-br"><meta charset="utf-8"><title>LitDex — Diagnóstico</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/static/base.css">
+<style>main{max-width:760px;margin:1.5rem auto;padding:0 1.2rem}table{border-collapse:collapse;width:100%}td{padding:.25rem .5rem;border-bottom:1px solid var(--rule)}td:last-child{text-align:right}
+ h3{margin:1.6rem 0 .3rem;font-size:.8rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:500}code{background:#efe6d5;padding:0 .3rem;border-radius:4px}</style>
+<header id="nav"></header><main id="m">carregando…</main>
+<script src="/static/base.js"></script>
+<script>
+montarNav("/ui/diagnostico");
+(async function () {
+  const d = await api("/api/diagnostico"), V = await vocab(), m = $("#m"); m.innerHTML = "";
+  const tabela = rows => el("table", {}, rows.map(([a, b]) => el("tr", {}, el("td", {}, a), el("td", {}, b))));
+  const rot = {author: "autores", work: "obras", periodical: "periódicos", event: "eventos", media: "mídias", institution: "instituições", relations: "relações", manifestations: "edições/arquivos", profiles: "perfis", sources: "fontes", evidences: "evidências"};
+  const NIVEIS = {
+    "contradição_potencial": ["intervalo incompatível", "falta"],
+    "contradição_estruturada": ["intervalo invertido", "falta"],
+    "lacuna_intervalo": ["intervalo incompleto", ""],
+    "data_nao_normalizada": ["data não normalizada", ""],
+    "data_imprecisa_ou_nao_interpretada": ["data imprecisa", ""],
+    "proveniencia_insuficiente": ["sem fonte explícita", ""],
+    "menção_em_notas": ["menção em notas", ""]
+  };
+  m.append(el("h2", {style: "font-weight:500"}, "Diagnóstico"), el("h3", {}, "Acervo"), tabela(Object.entries(d.contagens).map(([k, v]) => [rot[k] || k, v])));
+  m.append(el("h3", {}, "Coerência temporal"));
+  if (d.alertas_temporais?.length) {
+    m.append(el("p", {class: "teoria"}, `${d.alertas_temporais.length} alerta(s) de coerência temporal. São sinalizações para revisão, não correções automáticas.`),
+      el("ul", {}, d.alertas_temporais.map(a => {
+        const [rotulo, classe] = NIVEIS[a.nivel] || [a.nivel, ""];
+        return el("li", {}, el("b", {}, a.periodico || a.identificador), el("span", {class: "chip " + classe}, rotulo), ": ", a.mensagem,
+          a.ano_ocorrencia ? el("div", {class: "teoria"}, "Ocorrência: " + a.ano_ocorrencia) : "",
+          a.fonte ? el("div", {class: "teoria"}, "Fonte registrada: " + a.fonte) : "",
+          a.evidencia_notas ? el("blockquote", {class: "teoria"}, a.evidencia_notas) : "");
+      })));
+  } else {
+    m.append(el("p", {class: "teoria"}, "Nenhum alerta foi detectado entre datas de relações, manifestações, intervalos de circulação e anos mencionados nas notas. Isso não comprova exatidão histórica: referências ambíguas, datas ausentes e fontes não verificadas ainda exigem leitura crítica."));
+  }
+  m.append(el("h3", {}, "Proveniência e esquema"),
+    el("p", {class: "teoria"}, "A rastreabilidade mede presença de fonte identificável; não é avaliação de veracidade."),
+    tabela([["esquema do banco", "v" + d.esquema],
+            ["evidências em revisão", d.evidencias_em_revisao],
+            ["evidências órfãs (alvo excluído)", d.evidencias_orfas],
+            ["fontes catalogadas", d.contagens.sources]]));
+  if (d.avisos_migracao?.length) {
+    m.append(el("h3", {}, "Avisos da migração"),
+      el("p", {class: "teoria"}, "A conversão do banco terminou com avisos. O acervo continua utilizável."),
+      el("ul", {}, d.avisos_migracao.map(a => el("li", {class: "teoria"}, a))));
+  }
+  m.append(el("h3", {}, "Módulo online (opcional)"));
+  const cb = el("input", {type: "checkbox", checked: d.online, onchange: async e => { await api("/api/config", {method: "POST", body: {online: e.target.checked}}); aviso(e.target.checked ? "online ligado" : "online desligado"); }});
+  m.append(el("label", {}, cb, " consultar Crossref, Open Library e Wikidata quando eu pedir"), el("p", {class: "teoria"}, "Só texto de busca (título, autor, DOI) sai do computador, nunca arquivos. Tudo volta como sugestão com a fonte; nada é gravado sozinho."));
+  m.append(el("h3", {}, "Bibliotecas da interface (dentro do pacote: web/vendor)"), tabela(Object.entries(d.vendor).map(([k, v]) => [k, v ? el("span", {class: "ok"}, "✓ embutida") : el("span", {class: "erro"}, "ausente — reinstale o pacote")])));
+  m.append(el("h3", {}, "Arquivos"), tabela([["pasta de dados", el("code", {}, d.dados)], ["lotes na lixeira", d.lixeira_lotes], ["leituras pendentes (_tmp)", d.tmp]]),
+    el("p", {class: "teoria"}, "Nada é apagado de verdade: restaurar = mover data/_trash/<lote>/<caminho> de volta para data/<caminho>."));
+  m.append(el("h3", {}, "Vocabulário de relações"), el("p", {class: "teoria"}, `${Object.keys(V.relacoes).length} tipos em ${V.familias.length} famílias — ancorados em Genette (transtextualidade) e Rajewsky (intermidialidade).`),
+    tabela(V.familias.map(f => [el("span", {}, el("span", {class: "dot", style: `background:${f.cor}`}), f.titulo), Object.values(V.relacoes).filter(r => r.familia === f.chave).length])));
+  m.append(el("h3", {}, "Ambiente"), tabela([["python", d.python], ...Object.entries(d.modulos).map(([k, v]) => [k, v ? "✓" : el("span", {class: "erro"}, "não instalado")])]));
+})();
+</script></html>

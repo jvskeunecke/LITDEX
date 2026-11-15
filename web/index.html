@@ -1,0 +1,289 @@
+<!doctype html><html lang="pt-br"><meta charset="utf-8"><title>LitDex — Investigar</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/static/base.css">
+<style>
+ main{max-width:1240px;margin:1.4rem auto 3rem;padding:0 1.4rem}
+ .hero{padding:1.8rem 2rem;border-radius:24px;background:linear-gradient(135deg,#fffdf8 0,#f6ebd6 100%);border:1px solid var(--rule);box-shadow:var(--sombra);display:grid;grid-template-columns:1fr auto;gap:1.5rem;align-items:center}
+ .hero h1{font-size:2.5rem;line-height:1.1;margin:.5rem 0 .6rem}.hero p{max-width:34rem;color:#6b6153;margin:0 0 1.1rem}.acoes{display:flex;gap:.6rem;flex-wrap:wrap}.cta{display:inline-flex;align-items:center;padding:.48rem .9rem;border:1px solid #c9b98a;border-radius:9px;text-decoration:none;color:var(--ink);background:#fffaf0;font:500 .9rem system-ui}.cta.primario{background:var(--accent);border-color:var(--accent);color:#fff}.cta:hover{filter:brightness(.97);transform:translateY(-1px)}
+ .stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:.7rem;grid-column:1/-1}
+ .stat{background:#fffdf8cc;border:1px solid var(--rule);border-radius:14px;padding:.7rem .9rem;transition:transform .15s,box-shadow .15s;text-decoration:none;color:inherit}
+ .stat:hover{transform:translateY(-3px);box-shadow:var(--sombra)}.stat b{display:block;font-size:1.7rem;font-weight:500;line-height:1.1}.stat span{font:.78rem system-ui;color:var(--muted)}
+ .dex{display:flex;align-items:center;gap:1rem;background:#fffdf8cc;border:1px solid var(--rule);border-radius:16px;padding:.8rem 1.1rem}.dex b{font-size:1.05rem;font-weight:500;display:block}.dex span{font:.8rem system-ui;color:var(--muted)}
+ .cols{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:1.1rem;margin-top:1.1rem;align-items:start}@media(max-width:1000px){.cols,.hero{grid-template-columns:1fr}.stats{grid-template-columns:repeat(3,1fr)}}
+ .drop{border:2px dashed #c9b98a;border-radius:16px;padding:2rem;text-align:center;background:#fffaf0;margin:.8rem 0;cursor:pointer;transition:background .2s,border-color .2s,transform .2s}
+ .drop:hover,.drop.hover{background:#fff4de;border-color:var(--accent);transform:scale(1.005)}.drop b{display:block;font-size:1.05rem;font-weight:500}
+ #q{width:100%;margin:.5rem 0}
+ .grupo{margin:1.4rem 0 .3rem;font:600 .74rem system-ui;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+ .campo{margin:.55rem 0;padding:.6rem .9rem;background:#fffaf0;border:1px solid var(--rule);border-radius:12px}
+ .campo.off input[type=text],.campo.off select{opacity:.4}
+ .rot{font:600 .72rem system-ui;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:flex;gap:.5rem;align-items:center;margin-bottom:.3rem}
+ .campo input[type=text],.campo select{width:100%}
+ .ev{font-size:.8rem;color:var(--muted);margin-top:.3rem}
+ .alts button{font-size:.78rem;padding:.05rem .6rem;border-radius:20px;margin:.3rem .3rem 0 0}
+ .duas{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}@media(max-width:700px){.duas{grid-template-columns:1fr}}
+ .match-box{margin-top:1rem;padding:1rem;background:#fff8ea;border-radius:12px;border:1px solid #e8d9b5}
+ .match-card{padding:.5rem 0;border-bottom:1px dashed #e8d9b5}.match-card:last-child{border:0}
+ .sim{color:var(--accent);font-weight:600;font-size:.85rem;margin-left:.5rem}
+ label.co{display:block;font-size:.88rem;margin:.2rem 0}
+ .lado h3{font-size:1.05rem;margin:1rem 0 .5rem}.lado .cartao-link{display:flex;gap:.7rem;align-items:center;margin:.4rem 0}
+ .lado small{display:block;color:var(--muted);font:.76rem system-ui}
+</style>
+<header id="nav"></header>
+<main>
+ <section class="hero subir">
+  <div><div class="kicker">Acervo literário · pesquisa</div><h1>Investigue a partir<br>do que catalogou.</h1>
+   <p>O Fichário concentra autores, obras, manifestações e relações documentais. A busca, a biblioteca, o rizoma, a cronologia e o mapa são caminhos diferentes pelo mesmo acervo.</p>
+   <div class="acoes"><a class="cta primario" href="/ui/fichas">Abrir o Fichário</a><a class="cta" href="/ui/grafo">Explorar relações</a></div></div>
+  <div class="dex" id="dex"><span class="muted">carregando…</span></div>
+  <div class="stats" id="stats"></div>
+ </section>
+ <div class="cols">
+  <section class="painel subir" style="animation-delay:.08s"><div class="kicker">Entrada de arquivo</div><h2>Adicionar ao fichário</h2>
+   <div class="drop" id="drop"><b>Solte um PDF, DOCX, TXT ou MD aqui</b><span class="muted">ou clique para escolher — o scanner lê o começo do arquivo e propõe a ficha</span></div>
+   <input type="file" id="file" style="display:none" accept=".pdf,.docx,.txt,.md"><div id="revisao"></div></section>
+  <aside class="painel lado subir" style="animation-delay:.16s"><div class="kicker">Busca</div>
+   <input id="q" placeholder="autor, obra, referência, fonte, tag…"><div id="res"></div>
+   <h3>Campos descritivos pendentes</h3><div id="pouco"><span class="muted">—</span></div>
+   <h3>Entrou por último</h3><div id="recentes"><span class="muted">—</span></div></aside>
+ </div>
+</main>
+<script src="/static/base.js"></script>
+<script>
+montarNav("/ui/");
+const rev = $("#revisao"), drop = $("#drop"), file = $("#file");
+const NOMES = {author: "autor", work: "obra", periodical: "periódico", event: "evento", media: "mídia"};
+async function resumo() {
+  const c = await api("/api/catalogo"), st = $("#stats"); st.innerHTML = "";
+  [["author", "autores", "/ui/fichas?t=author"], ["work", "obras", "/ui/biblioteca"], ["periodical", "periódicos", "/ui/fichas?t=periodical"], ["event", "eventos", "/ui/fichas?t=event"]]
+    .forEach(([t, n, h]) => st.append(el("a", {class: "stat", href: h}, el("b", {}, c.contagem[t]), el("span", {}, n))));
+  st.append(el("a", {class: "stat", href: "/ui/biblioteca"}, el("b", {}, c.arquivos), el("span", {}, "arquivos")), el("a", {class: "stat", href: "/ui/grafo"}, el("b", {}, c.relacoes), el("span", {}, "relações")));
+  const d = $("#dex"); d.innerHTML = ""; d.append(anel(c.media, 64, 7), el("div", {}, el("b", {}, c.total ? `${c.media}% de cobertura descritiva` : "a dex está vazia"), el("span", {}, c.total ? `${c.completas} de ${c.total} fichas com ≥90% dos campos centrais preenchidos` : "solte o primeiro arquivo ao lado"), el("small", {class: "muted", style: "display:block;margin-top:.3rem"}, c.documentacao?.registros_associados ? `Rastreabilidade: ${c.documentacao.registros_com_fonte}/${c.documentacao.registros_associados} registros de evidência com fonte identificada` : "Rastreabilidade documental ainda sem evidências suficientes para calcular")));
+  const lista = (id, itens, extra) => { const b = $(id); b.innerHTML = ""; if (!itens.length) b.append(el("span", {class: "muted"}, "nada ainda"));
+    itens.forEach(i => b.append(el("a", {class: "cartao-link", href: urlFicha(i.tipo, i.id)}, anel(i.pct, 36, 4), el("div", {}, el("span", {class: "dot " + i.tipo}), i.nome, el("small", {}, extra(i)))))); };
+  lista("#pouco", c.falta_pouco.slice(0, 5), i => "campos descritivos em aberto: " + i.faltam.slice(0, 3).join(", "));
+  lista("#recentes", c.recentes.slice(0, 5), i => NOMES[i.tipo]);
+}
+resumo();
+let tmp = null, autores = [], C = {}, midias = [], doi = null;
+
+/* ---------- busca no acervo ---------- */
+let _tb;
+$("#q").oninput = e => { clearTimeout(_tb); _tb = setTimeout(async () => {
+  const q = e.target.value.trim(), res = $("#res");
+  if (q.length < 2) { res.innerHTML = ""; return; }
+  const r = await api("/api/busca?q=" + encodeURIComponent(q)); res.innerHTML = "";
+  if (!r.length) {
+    let estado = null; try { estado = await api("/api/busca/estado-indexacao"); } catch (_) {}
+    res.append(el("p", {class: "muted"}, "Nenhuma correspondência nos campos indexados."));
+    if (estado) res.append(el("div", {class: "aviso", style: "margin-top:.5rem"}, estado.interpretacao + " " + estado.mensagem));
+    return;
+  }
+  r.forEach(x => res.append(el("div", {class: "match-card"}, el("span", {class: "dot " + x.tipo}),
+    el("a", {href: urlFicha(x.tipo, x.id)}, x.nome), x.sub ? el("span", {class: "muted"}, "  " + x.sub) : "",
+    x.campo ? el("small", {class: "muted", style: "display:block;margin-left:1.5rem"}, `${x.campo}: ${x.trecho || ""}`) : "")));
+}, 250); };
+
+/* ---------- envio ---------- */
+drop.onclick = () => file.click();
+file.onchange = () => { enviar(file.files[0]); file.value = ""; };
+drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("hover"); });
+drop.addEventListener("dragleave", () => drop.classList.remove("hover"));
+drop.addEventListener("drop", e => { e.preventDefault(); drop.classList.remove("hover"); enviar(e.dataTransfer.files[0]); });
+
+async function enviar(f) {
+  if (!f) return;
+  if (tmp) await descartar();
+  rev.innerHTML = "<p>Lendo " + esc(f.name) + "…</p>";
+  const fd = new FormData(); fd.append("arquivo", f);
+  try {
+    const j = await api("/api/scan", {method: "POST", form: fd});
+    if (j.erro) { rev.innerHTML = `<p class="erro">${esc(j.erro)}</p>`; return; }
+    tmp = j.arquivo_temporario; doi = j.doi; autores = await api("/api/entidades/author?todos=1"); montar(j);
+  } catch (e) { rev.innerHTML = `<p class="erro">Não consegui ler: ${esc(e.message)}</p>`; }
+}
+
+/* ---------- revisão: você aceita, edita ou ignora cada coisa que o scanner achou ---------- */
+const evid = c => c ? "reconheci em: " + esc(c.origens.join(" · ")) : "não reconheci — marque a caixa e preencha, se quiser";
+const valorAutor = c => c.author_id ? `id:${c.author_id}` : `novo:${c.valor}`;
+const GRUPOS = {edicao: "Esta edição (o exemplar que você tem em mãos)"};
+
+function campoTexto(id, rot, extra = "") {
+  const cs = C[id], c = cs[0];
+  return `<div class="campo${c ? "" : " off"}" id="c-${id}">
+   <label class="rot"><input type="checkbox" data-usar="${id}" ${c ? "checked" : ""}> ${rot}</label>
+   <input type="text" id="i-${id}" value="${esc(c ? c.valor : "")}" ${c ? "" : "disabled"}>
+   <div class="ev" id="ev-${id}">${extra}${evid(c)}</div><div class="alts" id="alts-${id}">${altsHtml(id)}</div></div>`;
+}
+const altsHtml = id => C[id].slice(1).map((a, k) => `<button type="button" data-alt="${id}:${k + 1}">${esc(a.valor)}</button>`).join("");
+function campoSelect(id, rot, opcoes) {
+  const c = C[id][0];
+  return `<div class="campo${c ? "" : " off"}" id="c-${id}"><label class="rot"><input type="checkbox" data-usar="${id}" ${c ? "checked" : ""}> ${rot}</label>
+   <select id="i-${id}" ${c ? "" : "disabled"}>${opcoes.map(o => `<option>${o}</option>`).join("")}</select>
+   <div class="ev" id="ev-${id}">${evid(c)}</div></div>`;
+}
+function campoAutor() {
+  const cs = C.autor, vistos = new Set(cs.map(c => c.author_id).filter(Boolean));
+  let h = cs.map(c => `<option value="${esc(valorAutor(c))}">${c.author_id ? "✓ ficha existente: " : "➕ criar ficha: "}${esc(c.valor)}</option>`).join("");
+  const outros = autores.filter(a => !vistos.has(a.id));
+  if (outros.length) h += `<optgroup label="Outras fichas">${outros.map(a => `<option value="id:${a.id}">${esc(a.nome)}</option>`).join("")}</optgroup>`;
+  h += `<option value="novo:">✎ outro nome (criar ficha)…</option><option value="">— sem autor —</option>`;
+  return `<div class="campo"><label class="rot">Autor principal</label><select id="sel-autor">${h}</select>
+   <input type="text" id="i-autor-nome" style="margin-top:.4rem;display:none" placeholder="nome do autor">
+   <div class="ev" id="ev-autor"></div><div id="coautores"></div></div>`;
+}
+function atualizarAutor() {
+  const v = $("#sel-autor").value, inp = $("#i-autor-nome"), novo = v.startsWith("novo:");
+  inp.style.display = novo ? "block" : "none"; if (novo) inp.value = v.slice(5);
+  const c = C.autor.find(c => valorAutor(c) === v); $("#ev-autor").innerHTML = c ? evid(c) : "";
+  const box = $("#coautores"); box.innerHTML = "";
+  C.autor.filter(x => valorAutor(x) !== v).forEach((x, i) => {
+    const fraco = x.origens.some(o => o.includes("não aparece no texto"));
+    box.append(el("label", {class: "co"}, el("input", {type: "checkbox", "data-co": C.autor.indexOf(x), checked: !fraco}),
+      ` também autor(a): ${x.valor} `, el("span", {class: "muted"}, x.author_id ? "(✓ ficha existente)" : "(➕ ficha nova)"),
+      el("span", {class: "muted"}, fraco ? " — veio só dos metadados do arquivo" : "")));
+  });
+}
+function campoPeriodico() {
+  const cs = C.periodico;
+  const op = cs.map((c, i) => `<option value="${i}">${c.periodical_id ? "✓ já no acervo: " : "➕ criar: "}${esc(c.valor)}</option>`).join("");
+  return `<div class="campo"><label class="rot">Publicado em (periódico)</label>
+   <select id="sel-per">${op}<option value="novo">✎ outro periódico…</option><option value="" ${cs.length ? "" : "selected"}>— nenhum —</option></select>
+   <input type="text" id="i-per-nome" style="margin-top:.4rem;display:none" placeholder="título do periódico">
+   <div class="duas" style="margin-top:.4rem"><input type="text" id="i-per-ref" placeholder="volume, número, páginas (v. 9, n. 3, p. 11-23)"><input type="text" id="i-per-ano" placeholder="ano do número"></div>
+   <div class="ev" id="ev-per"></div></div>`;
+}
+function atualizarPeriodico() {
+  const v = $("#sel-per").value, c = C.periodico[+v], nome = $("#i-per-nome");
+  nome.style.display = v === "novo" ? "block" : "none";
+  $("#i-per-ref").value = c?.referencia || ""; $("#i-per-ano").value = c?.ano || "";
+  $("#ev-per").innerHTML = c ? evid(c) + (c.issn ? ` · ISSN ${esc(c.issn)}` : "") : "";
+}
+function desenharMidias() {
+  const box = $("#midias"); box.innerHTML = "";
+  midias.forEach((m, i) => box.append(el("span", {class: "chip"}, m, el("button", {class: "x", onclick: () => { midias.splice(i, 1); desenharMidias(); }}, "×"))));
+  if (midias.length > 1) box.append(el("span", {class: "muted"}, " plurimidialidade (Rajewsky: combinação de mídias)"));
+}
+
+function montar(j) {
+  ["titulo", "autor", "ano", "ano_edicao", "editora", "local", "edicao_nota", "fonte", "tradutor", "organizador", "idioma", "genero", "tipo", "periodico"].forEach(k => C[k] = j[k] || []);
+  midias = ["texto verbal"];
+  rev.innerHTML = `<h3 style="font-weight:500">Li «${esc(j.arquivo)}». Confira o que reconheci:</h3>
+   <p class="muted" style="margin-top:-.4rem">Desmarque o que estiver errado, edite o que estiver incompleto. Nada é gravado antes de você confirmar.${j.doi ? " DOI: " + esc(j.doi) : ""}</p>
+   <div class="grupo">A obra</div>
+   ${campoTexto("titulo", "Título")}${campoAutor()}
+   <div class="duas">${campoTexto("ano", "Ano da obra", "ano da publicação original · ")}${campoSelect("genero", "Gênero", ["prosa", "verso"])}</div>
+   <div class="duas">${campoTexto("tipo", "Tipo (livre)")}${campoTexto("idioma", "Idioma")}</div>
+   <div class="campo"><label class="rot">Mídia (a obra pode combinar várias)</label><div id="midias"></div>
+    <input type="text" id="i-midia" placeholder="+ mídia e Enter (texto verbal, imagem, música…)" list="dl-midias" style="margin-top:.3rem"><datalist id="dl-midias"></datalist></div>
+   <div class="grupo">${GRUPOS.edicao}</div>
+   <div class="duas">${campoTexto("editora", "Editora")}${campoTexto("ano_edicao", "Ano da edição", "pode diferir do ano da obra · ")}</div>
+   <div class="duas">${campoTexto("local", "Local da edição")}${campoTexto("edicao_nota", "Nota da edição", "«quarta edição», série… · ")}</div>
+   ${campoTexto("fonte", "Fonte do arquivo", "de onde veio este arquivo · ")}
+   <div class="duas">${campoTexto("tradutor", "Tradução", "nome já catalogado · ")}${campoTexto("organizador", "Organização", "nome já catalogado · ")}</div>
+   <p class="muted" style="margin:.2rem 0 0;font-size:.78rem">Se o nome não existir no catálogo, o texto é preservado como evidência em revisão na ficha da edição — registre o crédito depois, em «Créditos desta edição».</p>
+   <div class="grupo">Circulação</div>${campoPeriodico()}
+   <div id="parecidas"></div>
+   <div style="margin-top:1rem"><button type="button" id="btn-add">Adicionar ao catálogo</button>
+    <button type="button" id="btn-online" title="consulta Crossref e Open Library — só envia título, autor e DOI">🔎 pesquisar online</button>
+    <button type="button" id="btn-desc">Descartar</button></div>`;
+  if (C.genero[0]) $("#i-genero").value = C.genero[0].valor;
+  if (!C.autor.length) $("#sel-autor").value = "";
+  vocab().then(V => { V.midias_sugeridas.forEach(m => $("#dl-midias").append(new Option(m))); });
+  atualizarAutor(); atualizarPeriodico(); desenharMidias(); parecidas();
+}
+
+/* ---------- obra parecida já no acervo ---------- */
+let _tp; const agendar = () => { clearTimeout(_tp); _tp = setTimeout(parecidas, 350); };
+async function parecidas() {
+  const box = $("#parecidas"); if (!box || !$("#i-titulo")) return;
+  const t = $("#i-titulo").value.trim();
+  if (!$('[data-usar="titulo"]').checked || t.length < 3) { box.innerHTML = ""; return; }
+  const sv = $("#sel-autor").value; let q = "titulo=" + encodeURIComponent(t);
+  if (sv.startsWith("id:")) q += "&author_id=" + sv.slice(3);
+  const ms = await api("/api/obras/parecidas?" + q); box.innerHTML = "";
+  if (!ms.length) return;
+  box.append(el("div", {class: "match-box"}, el("p", {}, el("strong", {}, "Já existe no acervo:")),
+    ms.map(m => el("div", {class: "match-card"}, el("em", {}, m.titulo), " — " + (m.author_nome || "sem autor"),
+      el("span", {class: "sim"}, Math.round(m.similaridade * 100) + "%"), el("br"),
+      el("button", {type: "button", "data-anexar": m.id}, "Anexar este arquivo como outra edição dessa obra")))));
+}
+
+/* ---------- eventos (delegados) ---------- */
+rev.onchange = e => {
+  const t = e.target;
+  if (t.dataset.usar) { const id = t.dataset.usar; $("#c-" + id).classList.toggle("off", !t.checked); $("#i-" + id).disabled = !t.checked; if (id === "titulo") agendar(); }
+  if (t.id === "sel-autor") { atualizarAutor(); agendar(); }
+  if (t.id === "sel-per") atualizarPeriodico();
+};
+rev.oninput = e => { if (e.target.id === "i-titulo") agendar(); };
+rev.onkeydown = e => { if (e.target.id === "i-midia" && e.key === "Enter" && e.target.value.trim()) {
+  midias.push(e.target.value.trim().toLowerCase()); e.target.value = ""; desenharMidias(); e.preventDefault(); } };
+rev.onclick = e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.alt) { const [id, k] = b.dataset.alt.split(":"), c = C[id][+k];
+    $("#i-" + id).value = c.valor; $("#ev-" + id).innerHTML = evid(c); if (id === "titulo") agendar(); }
+  else if (b.dataset.anexar) adicionar(+b.dataset.anexar);
+  else if (b.id === "btn-add") adicionar();
+  else if (b.id === "btn-online") pesquisarOnline();
+  else if (b.id === "btn-desc") { descartar(); rev.innerHTML = ""; }
+};
+
+async function descartar() {
+  if (!tmp) return;
+  await api("/api/descartar", {method: "POST", body: {arquivo_temporario: tmp}}).catch(() => {}); tmp = null;
+}
+
+/* ---------- módulo online (opcional): só traz SUGESTÕES, com a fonte ---------- */
+function addAlts(id, cands) {
+  cands.forEach(c => { if (!C[id].some(x => x.valor.toLowerCase() === c.valor.toLowerCase())) C[id].push(c); });
+  const alvo = $("#alts-" + id); if (alvo) alvo.innerHTML = altsHtml(id);
+  const caixa = $("#i-" + id);
+  if (caixa && !caixa.value && C[id][0]) { caixa.value = C[id][0].valor; caixa.disabled = false; $("#c-" + id).classList.remove("off"); $('[data-usar="' + id + '"]').checked = true; $("#ev-" + id).innerHTML = evid(C[id][0]); }
+}
+async function pesquisarOnline() {
+  const cfg = await api("/api/config");
+  if (!cfg.online) {
+    if (!confirm("O módulo online consulta Crossref e Open Library pela internet.\nSó o título, o autor e o DOI são enviados — nunca o arquivo.\nNada é gravado sem a sua confirmação.\n\nLigar o módulo online?")) return;
+    await api("/api/config", {method: "POST", body: {online: true}});
+  }
+  const titulo = $("#i-titulo").value.trim(), sv = $("#sel-autor").value;
+  const autor = sv.startsWith("id:") ? (autores.find(a => a.id === +sv.slice(3)) || {}).nome : (sv.startsWith("novo:") ? $("#i-autor-nome").value : "");
+  const btn = $("#btn-online"); btn.disabled = true; btn.textContent = "consultando…";
+  try {
+    const s = await api("/api/online/obra", {method: "POST", body: {titulo, autor, doi}});
+    ["titulo", "ano", "editora", "idioma"].forEach(k => s[k] && addAlts(k, s[k]));
+    (s.autor || []).forEach(c => { if (!C.autor.some(x => x.valor.toLowerCase() === c.valor.toLowerCase())) {
+      C.autor.push({...c, author_id: null}); $("#sel-autor").insertAdjacentHTML("afterbegin", `<option value="${esc(valorAutor({valor: c.valor}))}">🔎 online — criar ficha: ${esc(c.valor)}</option>`); } });
+    (s.periodico || []).forEach(c => { if (!C.periodico.some(x => x.valor.toLowerCase() === c.valor.toLowerCase())) {
+      C.periodico.push({...c, periodical_id: null}); $("#sel-per").insertAdjacentHTML("afterbegin", `<option value="${C.periodico.length - 1}">🔎 online — criar: ${esc(c.valor)}</option>`); } });
+    atualizarAutor(); aviso(Object.keys(s).length ? "sugestões online adicionadas (veja as alternativas de cada campo)" : "nada encontrado online");
+  } catch (e) { aviso(e.message); }
+  btn.disabled = false; btn.textContent = "🔎 pesquisar online";
+}
+
+async function adicionar(workId) {
+  const usa = id => $(`[data-usar="${id}"]`).checked, val = id => usa(id) ? ($("#i-" + id).value.trim() || null) : null;
+  const body = {arquivo_temporario: tmp, titulo: val("titulo"), ano: val("ano"), genero: val("genero"), tipo: val("tipo"), idioma: val("idioma"),
+    editora: val("editora"), ano_edicao: val("ano_edicao"), tradutor: val("tradutor"), organizador: val("organizador"), midias,
+    local: val("local"), edicao_nota: val("edicao_nota"), fonte: val("fonte")};
+  const sv = $("#sel-autor").value;
+  if (sv.startsWith("id:")) body.author_id = +sv.slice(3);
+  else if (sv.startsWith("novo:")) body.autor_novo = $("#i-autor-nome").value.trim() || null;
+  body.coautores = [...document.querySelectorAll("[data-co]")].filter(x => x.checked).map(x => {
+    const c = C.autor[+x.dataset.co]; return c.author_id ? {author_id: c.author_id} : {nome: c.valor}; });
+  const sp = $("#sel-per").value;
+  if (sp !== "") {
+    const c = C.periodico[+sp], nome = sp === "novo" ? $("#i-per-nome").value.trim() : c?.valor;
+    const comum = {referencia: $("#i-per-ref").value.trim() || null, ano: $("#i-per-ano").value.trim() || null};
+    if (c?.periodical_id && sp !== "novo") body.periodico = {id: c.periodical_id, ...comum};
+    else if (nome && !c?.incompleto) body.periodico = {titulo: nome, issn: c?.issn || null, ...comum};
+    else if (nome && c?.incompleto && sp === "novo") body.periodico = {titulo: nome, issn: c.issn, ...comum};
+  }
+  if (workId) body.work_id_existente = workId;
+  try {
+    const j = await api("/api/ingest", {method: "POST", body}); tmp = null;
+    resumo(); rev.innerHTML = `<p class="ok">✓ ${j.anexado ? "Arquivo anexado à obra" : "Obra adicionada"}${j.author_id ? ` — ficha de <a href="${urlFicha("author", j.author_id)}">${esc(j.author_nome)}</a>${j.autor_criado ? " (ficha nova criada)" : ""}` : " (sem autor)"}.
+     ${j.work_id ? `<a href="${urlFicha("work", j.work_id)}">abrir a ficha da obra</a>` : ""}${(j.participacoes_criadas ?? j.relacoes_criadas) ? ` · ${(j.participacoes_criadas ?? j.relacoes_criadas)} participação(ões) de autoria estruturada(s)` : ""}</p>`;
+  } catch (e) { aviso(e.message); }
+}
+</script></html>

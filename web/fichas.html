@@ -1,0 +1,43 @@
+<!doctype html><html lang="pt-br"><meta charset="utf-8"><title>LitDex — Fichas</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/static/base.css">
+<style>
+ .grade{display:grid;grid-template-columns:330px 1fr;min-height:calc(100vh - 3.4rem)}
+ @media(max-width:800px){.grade{grid-template-columns:1fr}}
+ #lateral{border-right:1px solid var(--rule);padding:1rem;background:#fffdf8cc;overflow:auto;max-height:calc(100vh - 3.4rem);position:sticky;top:3.4rem}
+ .filtros{display:flex;flex-wrap:wrap;gap:.3rem;margin:.6rem 0}
+ .filtros button{font-size:.76rem;padding:.12rem .6rem;border-radius:20px;opacity:.55}.filtros button.on{opacity:1;background:#f0e1bf;border-color:var(--accent)}
+ #filtro{width:100%}
+ .grupo-t{display:flex;align-items:center;gap:.4rem;margin:1rem 0 .3rem;font:600 .72rem system-ui;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);position:sticky;top:0;background:#fffdf8f2;padding:.2rem 0}
+ .item{display:flex;gap:.55rem;align-items:center;padding:.3rem .45rem;border-radius:10px;cursor:pointer;transition:background .12s,transform .12s}
+ .item:hover{background:#f6eedd;transform:translateX(3px)}.item.on{background:#ecdcb7}
+ .item .t{flex:1;min-width:0;line-height:1.25}.item small{display:block;color:var(--muted);font:.74rem system-ui;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #principal{padding:1.6rem 2.2rem 4rem;max-width:1000px}
+ .cab{display:flex;gap:1.3rem;align-items:flex-start}
+ .capa{width:128px;height:168px;border:1px dashed #c9b98a;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.75rem;text-align:center;cursor:pointer;overflow:hidden;flex:none;background:#fffaf0;transition:transform .15s,box-shadow .15s}
+ .capa:hover{transform:translateY(-3px);box-shadow:var(--sombra)}.capa img{width:100%;height:100%;object-fit:cover}
+ input.titulo{font:600 1.8rem/1.2 ui-serif,Georgia,serif;border:0;border-bottom:1px dashed transparent;background:transparent;width:100%;padding:.1rem 0;box-shadow:none}
+ input.titulo:hover,input.titulo:focus{border-bottom-color:#c9b98a;box-shadow:none}
+ .tipo-tag{font:600 .72rem system-ui;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+ .campos{display:flex;flex-wrap:wrap;gap:.8rem 1.2rem;margin:.8rem 0}
+ .cp{display:flex;flex-direction:column;gap:.15rem}.cp .rot{font:600 .7rem system-ui;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+ section.bloco{margin-top:1.7rem;animation:subir .4s both}section.bloco>h3{font:600 .76rem system-ui;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);border-bottom:1px solid var(--rule);padding-bottom:.25rem;margin-bottom:.5rem}
+ .md{min-height:2rem;cursor:text;padding:.2rem .4rem;border-radius:8px}.md:hover{background:#f6f1e6}
+ ul.lista{list-style:none;padding:0;margin:.3rem 0}ul.lista li{padding:.3rem 0;border-bottom:1px dotted var(--rule);display:flex;gap:.6rem;align-items:baseline;flex-wrap:wrap}
+ .ed{border:1px solid var(--rule);border-radius:12px;padding:.7rem .9rem;margin:.6rem 0;background:#fffaf0}
+ .galeria{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.6rem}
+ .galeria figure{margin:0}.galeria img{width:100%;height:110px;object-fit:cover;border-radius:8px}.galeria figcaption{font-size:.75rem;color:var(--muted)}
+ .cartao{border:1px solid #e8d9b5;background:#fff8ea;border-radius:12px;padding:.7rem .9rem;margin:.5rem 0}
+ .cartao .campos-ap{display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.4rem}
+ .vazio{padding:3rem;color:var(--muted);font-style:italic}
+ .faltam{margin:.5rem 0 0;display:flex;gap:.2rem;flex-wrap:wrap;align-items:center;font:.78rem system-ui;color:var(--muted)}
+ .novo-menu{display:flex;gap:.3rem;flex-wrap:wrap;margin:.2rem 0 .4rem}
+ #nav-ficha{position:sticky;top:3.4rem;z-index:8;display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;padding:.45rem .55rem;margin:0 0 1rem;background:#fffdf8f2;border:1px solid var(--rule);border-radius:10px;backdrop-filter:blur(8px)}
+ #nav-ficha a{font:.76rem system-ui;padding:.28rem .5rem;border-radius:6px;background:#f6f1e6;color:var(--ink);text-decoration:none}#nav-ficha a:hover{background:#ecdcb7}
+ .nav-ficha-titulo{font:.68rem system-ui;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-right:.2rem}
+ section.bloco{scroll-margin-top:8rem}#sec-identificacao{scroll-margin-top:8rem}
+</style>
+<header id="nav"></header>
+<div class="grade"><aside id="lateral"></aside><main id="principal"><div class="vazio">Escolha uma ficha à esquerda — ou crie a primeira com «+ nova».</div></main></div>
+<script src="/vendor/marked.umd.js"></script><script src="/vendor/purify.min.js"></script>
+<script src="/static/base.js"></script><script src="/static/js/fichas.js"></script></html>

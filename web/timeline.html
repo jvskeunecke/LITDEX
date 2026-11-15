@@ -1,0 +1,21 @@
+<!doctype html><html lang="pt-br"><meta charset="utf-8"><title>LitDex — Linha do tempo</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="/static/base.css">
+<style>
+ .barra{display:flex;gap:.5rem 1.2rem;align-items:center;flex-wrap:wrap;padding:.6rem 1.4rem;border-bottom:1px solid var(--rule);background:var(--paper);font-size:.85rem}
+ .barra label{cursor:pointer}
+ #rolagem{overflow:auto;height:calc(100vh - 6.6rem);background:var(--bg)}
+ #faixas{position:sticky;left:0;top:0;height:0;width:0;z-index:4}.rot-faixa{position:absolute;left:0;white-space:nowrap;font:600 12px system-ui;background:#f4efe9f0;padding:.15rem .6rem .15rem .7rem;border-radius:0 10px 10px 0;box-shadow:2px 0 6px #0001}
+ #rolagem{cursor:grab}#rolagem.arrastando{cursor:grabbing;user-select:none}
+ svg .barra-i{transform-box:fill-box;transform-origin:left center;animation:cresce .7s cubic-bezier(.2,.7,.2,1) both}svg .ponto-i{transform-box:fill-box;transform-origin:center;animation:surge .5s cubic-bezier(.2,.9,.3,1.4) both}
+ @keyframes surge{from{opacity:0;transform:scale(.2)}to{opacity:1;transform:none}}
+ svg.foco .item{opacity:.58;transition:opacity .15s}svg.foco .item.on{opacity:1}svg .item.achado rect,svg .item.achado path{filter:drop-shadow(0 0 6px #c9743a)}
+ #dica{position:fixed;pointer-events:none;background:var(--ink);color:#fff;font:12px system-ui;padding:.35rem .6rem;border-radius:8px;max-width:20rem;z-index:50;display:none}#dica small{opacity:.75;display:block}
+ #ano-ir{width:6.5rem}
+ svg text{font:11px system-ui;fill:#2b2620}svg .eixo{fill:#8a8175;font-size:10px}
+ svg .item{cursor:pointer}svg .item:hover{opacity:.7}
+ #aviso-dados{padding:.5rem 1.4rem;font-size:.82rem;color:var(--muted)}
+</style>
+<header id="nav"></header>
+<div class="barra" id="barra"></div><div id="aviso-dados"></div><div id="rolagem"><div id="faixas"></div><svg id="svg"></svg></div><div id="dica"></div>
+<script src="/static/base.js"></script><script src="/static/js/timeline.js?v=15"></script></html>
