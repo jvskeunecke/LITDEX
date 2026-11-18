@@ -124,9 +124,9 @@ function desenhar() {
   svg.append("defs").append("marker").attr("id", "seta").attr("viewBox", "0 -4 8 8").attr("refX", 16).attr("markerWidth", 6).attr("markerHeight", 6).attr("orient", "auto").append("path").attr("d", "M0,-4L8,0L0,4").attr("fill", "#8a8175");
   const raiz = svg.append("g"); const zoom = d3.zoom().scaleExtent([0.15, 5]).on("zoom", e => { if (e.sourceEvent) usuarioMexeu = true; raiz.attr("transform", e.transform); }); svg.call(zoom).on("dblclick.zoom", null); window._zoom = {svg, zoom, W, Ht};
   const nos = G.nos.map(d => ({...d, ...(POS[d.id] || {x: W / 2 + (Math.random() - .5) * 80, y: Ht / 2 + (Math.random() - .5) * 80})})), lig = G.arestas.map(a => ({...a, source: a.origem, target: a.destino}));
-  // Grafos grandes recebem menos efeitos, menos iterações de colisão e pintura limitada a ~30 fps.
-  const grafoVolumoso = nos.length >= 80 || lig.length >= 160;
-  const animarEntrada = !grafoVolumoso && !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  // [Ajuste] O limite automático que FORÇAVA o modo leve em grafos volumosos (>=80 nós ou
+  // >=160 ligações) foi desligado: agora só o botão «FPS reduzido» controla o ritmo de pintura.
+  const animarEntrada = !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   const l = raiz.append("g").selectAll("line").data(lig).join("line").attr("class", "aresta")
     .attr("stroke", corAresta)
     .attr("stroke-width", d => d.derivada === "projecao" ? Math.min(1.5 + (d.peso || 1) * 1.2, 8) : d.derivada === "estrutural" ? 1.5 : 2)
@@ -167,17 +167,17 @@ function desenhar() {
   }
   svg.on("click", () => $("#info").style.display = "none");
   sim = d3.forceSimulation(nos)
-    .alphaDecay(grafoVolumoso ? 0.055 : 0.04)
+    .alphaDecay(0.04)
     .velocityDecay(0.4)
     .force("link", d3.forceLink(lig).id(d => d.id).distance(d => d.derivada === "calculada" ? 130 : 85).strength(d => d.derivada === "calculada" ? .08 : .5))
     .force("charge", d3.forceManyBody().strength(-340)).force("center", d3.forceCenter(W / 2, Ht / 2))
     // O raio considera o rótulo abreviado; grafos volumosos usam uma passagem de colisão.
-    .force("collide", d3.forceCollide(d => Math.max(24, Math.min(78, 15 + rotuloNo(d).length * 2.15))).iterations(grafoVolumoso ? 1 : 2));
+    .force("collide", d3.forceCollide(d => Math.max(24, Math.min(78, 15 + rotuloNo(d).length * 2.15))).iterations(2));
   if (S.ordenarTempo && nos.some(d => Number.isFinite(d._xTempo))) {
     sim.force("tempo-x", d3.forceX(d => d._xTempo ?? W / 2).strength(d => Number.isFinite(d._xTempo) ? .62 : .08));
   }
-  sim.alpha(POS && Object.keys(POS).length ? (grafoVolumoso ? .35 : .5) : (grafoVolumoso ? .75 : 1));
-  sim.on("end", () => { if (S.rotacaoViva && !pausado && !document.hidden && atual === sequenciaDesenho) sim?.alpha(.35).restart(); else if (atual === sequenciaDesenho && !usuarioMexeu) ajustar(!grafoVolumoso); });
+  sim.alpha(POS && Object.keys(POS).length ? .5 : 1);
+  sim.on("end", () => { if (S.rotacaoViva && !pausado && !document.hidden && atual === sequenciaDesenho) sim?.alpha(.35).restart(); else if (atual === sequenciaDesenho && !usuarioMexeu) ajustar(true); });
   if (S.rotacaoViva) {
     // Mantém o sistema vivo com uma força orbital suave; sem simulação extra ou WebGL.
     sim.force("orbita", alpha => { const cx=W/2, cy=Ht/2; for (const d of nos) { const dx=d.x-cx, dy=d.y-cy; d.vx += (-dy*0.012)*Math.max(alpha, 0.45); d.vy += (dx*0.012)*Math.max(alpha, 0.45); } });
@@ -185,7 +185,7 @@ function desenhar() {
   }
   sim.on("tick", () => {
     const agora = performance.now();
-    if (agora - ultimaPintura < (S.fpsReduzido || grafoVolumoso ? 33 : 16) && sim.alpha() > sim.alphaMin()) return;
+    if (agora - ultimaPintura < (S.fpsReduzido ? 33 : 16) && sim.alpha() > sim.alphaMin()) return;
     ultimaPintura = agora;
     nos.forEach(d => POS[d.id] = {x: d.x, y: d.y});
     l.attr("x1", d => d.source.x).attr("y1", d => d.source.y).attr("x2", d => d.target.x).attr("y2", d => d.target.y);
@@ -193,7 +193,7 @@ function desenhar() {
   });
   window._nos = nos; G._nos = nos;
   const fichas = G.nos.filter(x => !["tag", "lugar", "manifestation", "issue"].includes(x.tipo)).length;
-  $("#resumo").textContent = `${fichas} ficha(s) · ${G.nos.length} nó(s) · ${G.arestas.length} ligação(ões)` + (S.projecao !== "nenhuma" ? ` · projeção ${S.projecao}` : "") + (grafoVolumoso ? " · modo leve ativo" : "");
+  $("#resumo").textContent = `${fichas} ficha(s) · ${G.nos.length} nó(s) · ${G.arestas.length} ligação(ões)` + (S.projecao !== "nenhuma" ? ` · projeção ${S.projecao}` : "");
   function vizinhos(d, on) {
     const viz = new Set([d.id]); lig.forEach(a => { if (a.source.id === d.id) viz.add(a.target.id); if (a.target.id === d.id) viz.add(a.source.id); });
     n.style("opacity", x => !on || viz.has(x.id) ? 1 : .15); l.style("opacity", a => !on || a.source.id === d.id || a.target.id === d.id ? 1 : .08);

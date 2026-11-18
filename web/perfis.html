@@ -17,14 +17,14 @@ $("#criar").onclick = async () => { const n = $("#novo").value.trim(); if (!n) r
 (async function () { V = await vocab(); desenhar(); })();
 async function desenhar() {
   const ps = await api("/api/perfis"); lista.innerHTML = "";
-  lista.append(el("div", {class: "card" + (!Perfil.id ? " ativo" : "")}, el("h3", {}, "Geral"), el("div", {class: "muted"}, "todo o acervo"),
-    Perfil.id ? el("button", {style: "margin-top:.4rem", onclick: () => { Perfil.set(0); location.reload(); }}, "usar o Geral") : el("span", {class: "ok"}, "✓ ativo")));
+  lista.append(el("div", {class: "card" + (!Perfil.id ? " ativo" : "")}, el("h3", {}, "Geral"), el("div", {class: "muted"}, "todo o acervo — só visualização; o app abre num perfil"),
+    Perfil.id ? el("button", {style: "margin-top:.4rem", onclick: () => { localStorage.setItem("litdex.perfil.anterior", String(Perfil.id)); Perfil.set(0); location.reload(); }}, "ver o Geral") : el("span", {class: "ok"}, "✓ em uso")));
   for (const p of ps) {
     const ativo = Perfil.id === p.id, itens = el("div"), card = el("div", {class: "card" + (ativo ? " ativo" : "")});
     card.append(el("h3", {}, p.nome), el("div", {class: "muted"}, `${p.n} ficha(s)`),
       el("div", {style: "margin-top:.4rem"}, ativo ? el("span", {class: "ok"}, "✓ ativo  ") : el("button", {onclick: () => { Perfil.set(p.id); location.reload(); }}, "ativar"), " ",
         el("button", {class: "mini", onclick: async () => { const n = prompt("Novo nome:", p.nome); if (n) { try { await api(`/api/perfis/${p.id}`, {method: "PATCH", body: {nome: n}}); location.reload(); } catch (e) { aviso(e.message); } } }}, "renomear"), " ",
-        el("button", {class: "mini perigo", onclick: async () => { if (confirm(`Apagar o perfil «${p.nome}»?\nNenhuma ficha é apagada — só o recorte.`)) { await api(`/api/perfis/${p.id}`, {method: "DELETE"}); if (ativo) Perfil.set(0); location.reload(); } }}, "apagar perfil")));
+        el("button", {class: "mini perigo", onclick: async () => { if (confirm(`Apagar o perfil «${p.nome}»?\nNenhuma ficha é apagada — só o recorte.`)) { await api(`/api/perfis/${p.id}`, {method: "DELETE"}); /* se era o perfil ativo, montarNav() reabre no primeiro perfil — nunca no Geral */ location.reload(); } }}, "apagar perfil")));
     const busca = el("input", {placeholder: "anexar uma ficha que já existe…", style: "width:18rem;margin-top:.5rem"}); card.append(busca, itens);
     const pinta = async () => { const it = await api(`/api/perfis/${p.id}/itens`); itens.innerHTML = "";
       Object.entries(it).filter(([, l]) => l.length).forEach(([t, l]) => { itens.append(el("div", {class: "grp"}, V.entidades[t].plural));

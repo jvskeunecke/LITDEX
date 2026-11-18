@@ -22,9 +22,12 @@ function aviso(m) {
 }
 const md2html = t => (window.marked && window.DOMPurify) ? DOMPurify.sanitize(marked.parse(t || "")) : esc(t || "").replace(/\n/g, "<br>");
 
-/* ---- perfil ativo: "Geral" (0) ou um recorte de pesquisa. Vai em TODA chamada /api. */
+/* ---- perfil ativo: um recorte de pesquisa, ou "Geral" (0). Vai em TODA chamada /api.
+   Regra de abertura: o app NÃO abre no Geral. Sem escolha registrada, entra no primeiro
+   perfil existente ("Perfil I"); o Geral fica disponível apenas como visualização do todo. */
 const Perfil = {
   get id() { return +localStorage.getItem("litdex.perfil") || 0; },
+  get escolhido() { return localStorage.getItem("litdex.perfil") !== null; },
   set(id) { localStorage.setItem("litdex.perfil", String(id || 0)); },
 };
 const _fetch = window.fetch.bind(window);
@@ -54,11 +57,22 @@ async function montarNav(ativa) {
   const nav = $("#nav") || document.body.prepend(el("header", {id: "nav"})) || $("#nav");
   nav.innerHTML = ""; nav.append(el("a", {href: "/ui/", class: "marca", "aria-label": "LitDex — início", title: "Ir para Início"}, "LitDex"));
   PAGINAS.forEach(([h, t]) => nav.append(el("a", {href: h, class: h === ativa ? "on" : ""}, t)));
+  let perfis = [];
+  try { perfis = await api("/api/perfis"); } catch (e) {}
+  // Abertura fora do Geral: sem escolha registrada, o app entra no primeiro perfil ("Perfil I").
+  if (!Perfil.escolhido) {
+    const anterior = +localStorage.getItem("litdex.perfil.anterior") || 0;
+    const alvo = perfis.find(p => p.id === anterior) || perfis[0];
+    Perfil.set(alvo ? alvo.id : 0);
+  } else if (Perfil.id && !perfis.some(p => p.id === Perfil.id)) {
+    // O perfil ativo deixou de existir (apagado): volta ao primeiro perfil, não ao Geral.
+    Perfil.set(perfis[0] ? perfis[0].id : 0);
+  }
   const sel = el("select", {title: "Perfil: um recorte de pesquisa sobre o mesmo acervo"});
-  sel.append(new Option("Geral (tudo)", 0));
-  try { (await api("/api/perfis")).forEach(p => sel.append(new Option(`${p.nome} (${p.n})`, p.id))); } catch (e) {}
-  sel.value = Perfil.id; if (sel.value != Perfil.id) { Perfil.set(0); sel.value = 0; }
-  sel.onchange = () => { Perfil.set(+sel.value); location.reload(); };
+  sel.append(new Option("Geral (visualização do todo)", 0));
+  perfis.forEach(p => sel.append(new Option(`${p.nome} (${p.n})`, p.id)));
+  sel.value = Perfil.id;
+  sel.onchange = () => { localStorage.setItem("litdex.perfil.anterior", String(Perfil.id)); Perfil.set(+sel.value); location.reload(); };
   nav.append(el("span", {class: "fim"}, "perfil ", sel, el("a", {href: "/ui/diagnostico"}, "diagnóstico")));
   document.body.classList.toggle("com-perfil", !!Perfil.id);
 }
